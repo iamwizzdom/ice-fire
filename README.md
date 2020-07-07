@@ -9,7 +9,7 @@
 
 ## How To Run This Project
 
-Open the `.env` file on the root directory of this project and set the following.
+Open the `.env` file in the root directory of this project and set the following.
  
  - `DB_HOST:` Your server host or ip address. 
  - `DB_PORT:` MySQL port. 
