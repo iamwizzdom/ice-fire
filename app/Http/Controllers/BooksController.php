@@ -29,7 +29,7 @@ class BooksController extends Controller
                     'number_of_pages' => $book['numberOfPages'],
                     'publisher' => $book['publisher'],
                     'country' => $book['country'],
-                    'release_date' => $book['release_date'],
+                    'release_date' => $book['released'],
                 ];
             }
 
