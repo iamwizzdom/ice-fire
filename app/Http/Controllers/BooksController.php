@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Book;
 use App\Http\Traits\Fetcher;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -29,7 +30,7 @@ class BooksController extends Controller
                     'number_of_pages' => $book['numberOfPages'],
                     'publisher' => $book['publisher'],
                     'country' => $book['country'],
-                    'release_date' => $book['released'],
+                    'release_date' => date('Y-m-d', strtotime($book['released'])),
                 ];
             }
 
@@ -58,7 +59,7 @@ class BooksController extends Controller
         if ($validator->fails()) return [
             'status_code' => 417,
             'status' => "fail",
-            'message' => $validator->errors(),
+//            'message' => $validator->errors(),
             'data' => []
         ];
 
@@ -67,7 +68,7 @@ class BooksController extends Controller
         if (!$book) return [
             'status_code' => 417,
             'status' => "fail",
-            'message' => "Couldn't create book at this time, please try again later",
+//            'message' => "Couldn't create book at this time, please try again later",
             'data' => []
         ];
 
@@ -75,7 +76,7 @@ class BooksController extends Controller
             'status_code' => 201,
             'status' => 'success',
             'data' => [
-                'book' => $book
+                'book' => $book->makeHidden('id')
             ]
         ];
 
@@ -83,10 +84,20 @@ class BooksController extends Controller
 
     public function all_books(Request $request)
     {
+        $books = Book::when($request->name, function ($query, $name) {
+            $query->whereRaw('name like ?', ["%{$name}%"]);
+        })->when($request->country, function ($query, $country) {
+            $query->whereRaw('country like ?', ["%{$country}%"]);
+        })->when($request->publisher, function ($query, $publisher) {
+            $query->whereRaw('publisher like ?', ["%{$publisher}%"]);
+        })->when($request->release_date, function ($query, $release_date) {
+            $query->whereYear('release_date', $release_date);
+        });
+
         return [
             'status_code' => 200,
             'status' => 'success',
-            'data' => Book::all()
+            'data' => $books->get()
         ];
     }
 
@@ -102,27 +113,27 @@ class BooksController extends Controller
         ];
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:50',
-            'isbn' => ['required', 'string', 'regex:/(\d{3})-(\d{10})/', Rule::unique('books', 'isbn')->ignore($book->id)],
-            'authors' => 'required|array',
-            'authors.*' => 'required|string|max:50',
-            'country' => 'required|string|max:100',
-            'number_of_pages' => 'required|numeric',
-            'publisher' => 'required|string:max:50',
-            'release_date' => 'required|date',
+            'name' => 'nullable|string|max:50',
+            'isbn' => ['nullable', 'string', 'regex:/(\d{3})-(\d{10})/', Rule::unique('books', 'isbn')->ignore($book->id)],
+            'authors' => 'nullable|array',
+            'authors.*' => 'nullable|string|max:50',
+            'country' => 'nullable|string|max:100',
+            'number_of_pages' => 'nullable|numeric',
+            'publisher' => 'nullable|string:max:50',
+            'release_date' => 'nullable|date',
         ]);
 
         if ($validator->fails()) return [
             'status_code' => 417,
             'status' => "fail",
-            'message' => $validator->errors(),
+//            'message' => $validator->errors(),
             'data' => []
         ];
 
         if (!$book->update($validator->validated())) return [
             'status_code' => 417,
             'status' => "fail",
-            'message' => "Couldn't update book at this time, please try again later",
+//            'message' => "Couldn't update book at this time, please try again later",
             'data' => []
         ];
 
